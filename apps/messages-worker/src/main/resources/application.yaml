@@ -1,0 +1,20 @@
+spring:
+  kafka:
+    bootstrap-servers: "localhost:9092"
+    consumer:
+      group-id: "messages-worker"
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: C7SQKr@g6SwtXNi
+    url: jdbc:postgresql://localhost:5432/postgres
+  jpa:
+    generate-ddl: true
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
