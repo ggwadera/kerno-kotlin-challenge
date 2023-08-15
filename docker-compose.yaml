@@ -1,24 +1,10 @@
-x-mongo-config:
-  &env_mongo
-  MONGODB_URI: mongodb://mongodb:27017/chat-db?authSource=admin
-  MONGODB_USERNAME: root
-  MONGODB_PASSWORD: "@3Hidu9bL12Mv73z@qKuV^TTYxZ15U#k"
-  MONGODB_REPLICASET: rs0
-  MONGODB_REPLICA_SET_NAME: rs0
-  MONGODB_REPLICA_SET_MODE: primary
-  MONGODB_REPLICA_SET_KEY: replsetkey
-  MONGODB_ROOT_PASSWORD: "@3Hidu9bL12Mv73z@qKuV^TTYxZ15U#k"
-  MONGODB_ADVERTISED_HOSTNAME: mongodb
-  MONGODB_MIN_POOL_SIZE: 1
-  MONGODB_MAX_POOL_SIZE: 5
-
 x-postgres-config:
   &env_postgres
   POSTGRES_PASSWORD: C7SQKr@g6SwtXNi
 
 x-env-redis:
   &env_redis
-  REDIS_PASSWORD: NhsZHN25I2btW#SHVBZP1lB#4m9BY&sb
+  REDIS_PASSWORD: eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
   REDIS_HOST: redis
   REDIS_PORT: 6379
   REDIS_ARGS: "--save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81"
@@ -37,32 +23,25 @@ x-env-kafka:
   KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@127.0.0.1:9093
 
 services:
-  messages-worker:
-    image: gradle:jdk18
-    hostname: messages-worker
-    working_dir: /usr/src/app
-    volumes: [ ./apps/messages-worker:/usr/src/app ]
-    command: gradle run
-    mem_limit: 4096MB
-    environment:
-      <<: [ *env_redis, *env_mongo, *env_postgres, *env_kafka ]
+  #  messages-worker:
+  #    image: gradle:jdk18
+  #    hostname: messages-worker
+  #    working_dir: /usr/src/app
+  #    volumes: [ ./apps/messages-worker:/usr/src/app ]
+  #    command: gradle run
+  #    mem_limit: 4096MB
+  #    environment:
+  #      <<: [ *env_redis, *env_mongo, *env_postgres, *env_kafka ]
 
-  ws-server:
-    image: gradle:jdk18
-    hostname: ws-server
-    working_dir: /usr/src/app
-    volumes: [ ./apps/ws-server:/usr/src/app ]
-    command: gradle run
-    mem_limit: 4096MB
-    environment:
-      <<: [ *env_redis, *env_mongo, *env_postgres, *env_kafka ]
-
-  mongodb:
-    image: bitnami/mongodb:4.2
-    hostname: mongodb
-    ports: [ '27018:27017' ]
-    environment:
-      <<: *env_mongo
+  #  ws-server:
+  #    image: gradle:jdk18
+  #    hostname: ws-server
+  #    working_dir: /usr/src/app
+  #    volumes: [ ./apps/ws-server:/usr/src/app ]
+  #    command: gradle run
+  #    mem_limit: 4096MB
+  #    environment:
+  #      <<: [ *env_redis, *env_mongo, *env_postgres, *env_kafka ]
 
   postgres:
     image: bitnami/postgresql:14.6.0
@@ -80,10 +59,26 @@ services:
     environment:
       <<: *env_redis
 
-  kafka:
-    image: bitnami/kafka:3.3.1
-    hostname: kafka
-    restart: always
-    ports: [ '9092:9092' ]
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    hostname: zookeeper
+    container_name: zookeeper
     environment:
-      <<: *env_kafka
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
